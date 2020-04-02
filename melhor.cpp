@@ -9,7 +9,7 @@
 #define TT 350
 #define INF 987654321
 using namespace std;
-
+//editando com gedit
 struct G{
   int a, b, c, d; //vértices que compõe a garra específica
 };
