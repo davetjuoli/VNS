@@ -3,8 +3,9 @@
 #include <ctime>
 #include <cstdlib>
 #include <map>
-#include <cstring>
 #include <algorithm>
+#include <set>
+#include <cstring>
 #define vb vector<bool>
 #define vvb vector<vb>
 #define vg vector<G>
@@ -18,26 +19,36 @@ struct G{
 
 time_t tempo_max;
 clock_t inic, fimm;
-int qtde_vertices;
+int qtde_vertices, qtde_garras=0;
 bool aresta[TT][TT];
 vector<int> aux;
 vector<vector<int> > vizinhos(TT,aux);
 vg l[TT]; //lista de garras relacionadas com vertices centrais 
 
+
+void remove(vb &s);
+
+
 void imprime(vb s);
 vb s_aleatoria(int tam);
 vb aleatoria(int tam);
 void lista_de_garras();
-bool garras(vb &s, bool remove);
-bool busca_garras_min(vb &s, int v);
+bool garras(vb &s);
+bool garras_min(vb &s, int v);
+vb remove_g_aleatoria(vb &s);
 vb melhor_v(vvb &vizinhos, vb &s);
 int f_objetivo(vb &s);
 vb bagunca(vb &s, int n);
 vb BL1(vb &s);
 vb VNS(vb &s);
 
+long int seed;
+
 int main(int argc, char **argv){
-  srand(time(NULL));
+  //srand(time(NULL));
+  seed=time(NULL);
+  srand(seed);
+  cout<<"seed: "<<seed;
   vb s_inicial, s_final;
   string aux;
   int edge;
@@ -58,17 +69,19 @@ int main(int argc, char **argv){
   }
 
   if(qtde_vertices<=50)tempo_max=10;
-  else if(qtde_vertices<=100)tempo_max=30;
+  else if(qtde_vertices<=100)tempo_max=5;
   else if(qtde_vertices<=200)tempo_max=60;
   else tempo_max=120;
 
   inic = clock();
   lista_de_garras();
+  //cout<<"qtde de garras: "<<qtde_garras<<endl;
 
   s_inicial = aleatoria(qtde_vertices);
 
   s_final = VNS(s_inicial);
-  cout<<" "<<f_objetivo(s_final)<<endl;
+
+  cout<<" "<<f_objetivo(s_final)<<" "<<seed<<endl;
 
   return 0;
 }
@@ -83,7 +96,7 @@ vb s_aleatoria(int tam){ //funcao constroi solucao aleatoria
   while(!v_disponiveis.empty()){
     int u = rand()%v_disponiveis.size();
     s_linha[u] = 1;
-    if(!garras(s_linha,0))
+    if(!garras(s_linha))
       s = s_linha;
     v_disponiveis.erase(v_disponiveis.begin()+u);
   }
@@ -105,7 +118,7 @@ int f_objetivo(vb &s){
   for(int i=0; i<qtde_vertices; i++)
     if(!s[i])
       penalidade++;
-  if(garras(s,0)) penalidade += qtde_vertices;
+  if(garras(s)) penalidade += qtde_vertices;
   return penalidade;
 }
 
@@ -148,8 +161,11 @@ vb melhor_v(vvb &vizinhos, vb &s){
 
 vb BL1(vb &s){
   vb aux = s;
-  while(garras(aux,1));
-
+  //cout<<"aaaaaaaaaaaaaaaaaaaaaaa"<<endl;
+  while(garras(aux)){
+    //aux = remove(aux);
+    remove(aux);
+  }
   int indices[qtde_vertices];
   for(int i=0; i<qtde_vertices; i++)
     indices[i]=i;
@@ -161,11 +177,12 @@ vb BL1(vb &s){
     int i = indices[j];
     if(!aux[i]){
       aux[i]=1;
-      if(busca_garras_min(aux,i)){
+      if(garras_min(aux,i)){
         aux[i]=0;
       } 
     }
   }
+  //cout<<"bbbbbbbbbbbbbbbbbbbbb"<<endl;
   return aux;
 }
 
@@ -178,6 +195,7 @@ vb VNS(vb &s){
     int b = 0, b_max = qtde_vertices;
     while(b < b_max){
       s_atual = bagunca(melhor_final,b);
+      //cout<<"bag"<<endl;
       b++;
       s_atual = BL1(s_atual);
       if(f_objetivo(s_atual) < f_objetivo(melhor_final)){
@@ -208,6 +226,7 @@ void lista_de_garras(){
           if(!aresta[v1][v2] and !aresta[v1][v3] and !aresta[v2][v3]){
             aux.a=v; aux.b=v1; aux.c=v2; aux.d=v3;
             l[v].push_back(aux);
+            qtde_garras++;
           }
         }
       }
@@ -215,37 +234,53 @@ void lista_de_garras(){
   }
 }
 
-bool garras(vb &s, bool remove){ //busca por garras nas listas de todos os vertices
-  if(remove){
-    vector<G> g;
-    bool tem = false;
-    for(int v=0; v<s.size(); v++)
-      if(s[v] and !l[v].empty())
-        for(auto garra:l[v])
-          if(s[garra.b] and s[garra.c] and s[garra.d]){
-            tem = true;
-            g.push_back(garra);
-          }
-    if(tem){
-      G garra = g[rand()%g.size()]; //escolhe uma garra aleatoria
-      int v = rand()%4;
-      if(v==0) s[garra.a]=0;
-      else if(v==1) s[garra.b]=0;
-      else if(v==2) s[garra.c]=0;
-      else s[garra.d]=0;
-      return true;
+void remove(vb &s){
+  int indices[qtde_vertices]; 
+  int p=0;
+  for(int i=0; i<qtde_vertices; i++) //conjunto de vertices presentes na solucao
+    if(s[i])
+      indices[p++]=i;
+  for(int i=0; i<p; i++){
+    int a=rand()%p, b=rand()%p;
+    swap(indices[a],indices[b]); //embaralha
+  } 
+  for(int i=0; i<p; i++){ 
+    int u = indices[i]; //para cada vertice u presente na solucao
+    int tam = l[u].size();
+    if(tam){
+      int indices_u[tam]; //conjunto de garras com centro em u
+      for(int j=0; j<tam; j++)
+        indices_u[j] = j;
+      for(int j=0; j<tam; j++){
+        int a=rand()%tam, b=rand()%tam;
+        swap(indices_u[a],indices_u[b]); //embaralha
+      }
+      for(int i=0; i<tam; i++){
+        G g = l[u][indices_u[i]]; //para cada garra g com centro em u
+        if(s[g.b] and s[g.c] and s[g.d]){ //verifica se a garra está presente na solucao corrente
+          int v = rand()%4; //quebra aleatoriamente a garra
+          if(v==0) s[g.a]=0;
+          else if(v==1) s[g.b]=0;
+          else if(v==2) s[g.c]=0;
+          else s[g.d]=0;
+          return;
+        }
+      }
     }
-    return false;
   }
+  return;
+}
+
+bool garras(vb &s){
   for(int v=0; v<s.size(); v++)
     if(s[v] and !l[v].empty())
       for(auto garra:l[v])
         if(s[garra.b] and s[garra.c] and s[garra.d])
           return true;
-  return false;
+  return false;  
 }
 
-bool busca_garras_min(vb &s, int v){ //busca por garras nas listas de v e dos vizinhos de v
+bool garras_min(vb &s, int v){ //busca por garras nas listas de v e dos vizinhos de v
   if(!l[v].empty())
     for(auto garra:l[v])
       if(s[garra.b] and s[garra.c] and s[garra.d])
