@@ -11,10 +11,11 @@
 using namespace std;
 
 struct G{
-  int a, b, c, d; //vertices que compoe a garra especi­fica
+  int a, b, c, d; //vertices que compoe a garra especiÂ­fica
 };
 
 time_t ini, fim, tempo_max;
+clock_t inic, fimm;
 int qtde_vertices;
 bool aresta[TT][TT];
 vector<int> aux;
@@ -32,7 +33,6 @@ vb melhor_v(vector<vb> &vizinhos, vb &s);
 int f_objetivo(vb &s);
 vb bagunca(vb &s, int n);
 vb BL1(vb &s);
-vb BL1_linha(vb &s);
 vb VNS(vb &s);
 vb VNS2(vb &s);
 
@@ -68,12 +68,13 @@ int main(int argc, char **argv){
   else tempo_max=120;
 
   time(&ini);
+  inic = clock();
   lista_de_garras();
   /*
   vb s(50,1);
   s[4]=0; s[15]=0; s[16]=0; s[22]=0; s[29]=0; s[30]=0; s[31]=0; s[32]=0; s[33]=0; s[36]=0; s[39]=0; s[47]=0; s[48]=0;
   if(garras(s,0)) cout<<"Tem garras"<<endl;
-  else cout<<"Não tem garras"<<endl;
+  else cout<<"NÃ£o tem garras"<<endl;
   exit(10);
   */
   s_inicial = aleatoria(qtde_vertices);
@@ -138,12 +139,11 @@ vb bagunca(vb &s, int n){
     }while(it != indices.end());
     indices.insert(x);
   }
-  it = indices.begin();
+  
   for(int i = 0; i < s.size(); i++){
-    if(i == *it){
+    it = indices.find(i);
+    if(it != indices.end())
       s_nova.push_back(!s[i]);
-      it++;
-    }
     else s_nova.push_back(s[i]);
   }
   return s_nova;
@@ -164,27 +164,9 @@ vb melhor_v(vector<vb> &vizinhos, vb &s){
 }
 
 vb BL1(vb &s){
-  vector<vb> vizinhos;
-  for(int i=0; i<qtde_vertices; i++){
-    vb aux;
-    for(int j=0; j<qtde_vertices; j++){
-      if(j==i)
-        aux.push_back(!s[j]);
-      else aux.push_back(s[j]);
-    }
-    vizinhos.push_back(aux);
-  }
-  return melhor_v(vizinhos, s);  
-}
-
-vb BL1_linha(vb &s){
   vb aux = s;
-  //cout<<"........"; imprime(aux);
-  int cont=0;
-  while(garras(aux,1)){
-    cont++;
-  }
-  //cout<<"--"<<cont<<endl; //imprime(s);
+  while(garras(aux,1));
+
   int indices[qtde_vertices];
   for(int i=0; i<qtde_vertices; i++)
     indices[i]=i;
@@ -202,7 +184,6 @@ vb BL1_linha(vb &s){
       } 
     }
   }
-  //cout<<";;;;;;;;"; imprime(aux);
   return aux;
 }
 
@@ -214,7 +195,7 @@ vb VNS(vb &s){
   while(difftime(fim,ini) < tempo_max){
     melhorou = false;
 
-    if(k == 1) s_linha = BL1_linha(s_atual);
+    if(k == 1) s_linha = BL1(s_atual);
     //imprime(s_linha);
     //imprime(s_atual);
     int aa = f_objetivo(s_linha), bb = f_objetivo(s_atual);
@@ -255,27 +236,27 @@ vb VNS(vb &s){
 
 vb VNS2(vb &s){
   vb melhor_final = s, s_atual = s;
-  int tc;
-  while(difftime(fim,ini) < tempo_max){
+  double t, tc;
+  fimm = clock() - inic;
+  t = (float)fimm/CLOCKS_PER_SEC;
+  while(t < tempo_max){
     int b = 0, b_max = qtde_vertices;
     while(b < b_max){
       s_atual = bagunca(melhor_final,b);
       b++;
-      s_atual = BL1_linha(s_atual);
+      s_atual = BL1(s_atual);
       if(f_objetivo(s_atual) < f_objetivo(melhor_final)){
-        time(&fim); tc = difftime(fim,ini);
+        fimm = clock() - inic;
+        tc = (float)fimm/CLOCKS_PER_SEC;
         melhor_final = s_atual;
-        time(&fim);
-        tc = difftime(fim,ini);
-        cout<<"m_pontuacao: "<<f_objetivo(melhor_final)<<" "; imprime(melhor_final);
         b = 1;
       }
     }
-    time(&fim);
+    fimm = clock() - inic;
+    t = (float)fimm/CLOCKS_PER_SEC;
     s_atual = aleatoria(qtde_vertices);
-    //cout<<"....melhor: "<<f_objetivo(melhor_final)<<endl;
   }
-  cout<<tc;
+  cout<<" "<<tc;
   return melhor_final;
 }
 
@@ -312,31 +293,12 @@ bool garras(vb &s, bool remove){ //busca por garras nas listas de todos os verti
             g.push_back(garra);
           }
     if(tem){
-      //cout<<"removendo:";
-      G garra = g[rand()%g.size()]; //escolhe uma garra aleatória
+      G garra = g[rand()%g.size()]; //escolhe uma garra aleatoria
       int v = rand()%4;
-      if(v==0){
-        //cout<<"a"<<endl;
-        s[garra.a]=0;
-      } 
-      else if(v==1){
-        //cout<<"b"<<endl;
-        s[garra.b]=0;
-      }
-      else if(v==2){
-        //cout<<"c"<<endl;
-        s[garra.c]=0;
-      } 
-      else{
-        //cout<<"d"<<endl;
-        s[garra.d]=0;
-      } 
-      /*
       if(v==0) s[garra.a]=0;
       else if(v==1) s[garra.b]=0;
       else if(v==2) s[garra.c]=0;
       else s[garra.d]=0;
-      */
       return true;
     }
     return false;
