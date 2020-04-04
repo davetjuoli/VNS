@@ -2,9 +2,11 @@
 #include <vector>
 #include <ctime>
 #include <cstdlib>
-#include <set>
+#include <map>
 #include <cstring>
+#include <algorithm>
 #define vb vector<bool>
+#define vvb vector<vb>
 #define vg vector<G>
 #define TT 350
 #define INF 987654321
@@ -28,7 +30,7 @@ vb aleatoria(int tam);
 void lista_de_garras();
 bool garras(vb &s, bool remove);
 bool busca_garras_min(vb &s, int v);
-vb melhor_v(vector<vb> &vizinhos, vb &s);
+vb melhor_v(vvb &vizinhos, vb &s);
 int f_objetivo(vb &s);
 vb bagunca(vb &s, int n);
 vb BL1(vb &s);
@@ -108,29 +110,29 @@ int f_objetivo(vb &s){
 }
 
 vb bagunca(vb &s, int n){
-  if(n == 0)
-    return s;
-  vb s_nova;
-  set<int> indices;
-  set<int>::iterator it;
-  int x;
-  for(int i = 0; i < n; i++){
+  if(n==0) return s;
+  map<int,bool> dic;
+  int indices[n], t=0;
+  for(int i=0; i<n; i++){
+    int v;
     do{
-      x = rand()%s.size();
-      it = indices.find(x);
-    }while(it != indices.end());
-    indices.insert(x);
+      v=rand()%qtde_vertices;
+    }while(dic[v]);
+    dic[v]=1;
+    indices[t++]=v;
   }
-  for(int i = 0; i < s.size(); i++){
-    it = indices.find(i);
-    if(it != indices.end())
+  sort(indices,indices + t);
+  vb s_nova; t=0;
+  for(int i=0; i<qtde_vertices; i++){
+    if(i==indices[t]){
       s_nova.push_back(!s[i]);
-    else s_nova.push_back(s[i]);
+      t++;
+    }else s_nova.push_back(s[i]);
   }
   return s_nova;
 }
 
-vb melhor_v(vector<vb> &vizinhos, vb &s){
+vb melhor_v(vvb &vizinhos, vb &s){
   int menor = INF, melhor;
   for(int i = 0; i < vizinhos.size(); i++){
     int aux = f_objetivo(vizinhos[i]);
