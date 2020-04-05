@@ -25,17 +25,13 @@ vector<int> aux;
 vector<vector<int> > vizinhos(TT,aux);
 vg l[TT]; //lista de garras relacionadas com vertices centrais 
 
-
-void remove(vb &s);
-
-
 void imprime(vb s);
 vb s_aleatoria(int tam);
 vb aleatoria(int tam);
 void lista_de_garras();
 bool garras(vb &s);
 bool garras_min(vb &s, int v);
-vb remove_g_aleatoria(vb &s);
+void remove(vb &s);
 vb melhor_v(vvb &vizinhos, vb &s);
 int f_objetivo(vb &s);
 vb bagunca(vb &s, int n);
@@ -48,7 +44,7 @@ int main(int argc, char **argv){
   //srand(time(NULL));
   seed=time(NULL);
   srand(seed);
-  cout<<"seed: "<<seed;
+  cout<<" "<<seed;
   vb s_inicial, s_final;
   string aux;
   int edge;
@@ -161,9 +157,7 @@ vb melhor_v(vvb &vizinhos, vb &s){
 
 vb BL1(vb &s){
   vb aux = s;
-  //cout<<"aaaaaaaaaaaaaaaaaaaaaaa"<<endl;
   while(garras(aux)){
-    //aux = remove(aux);
     remove(aux);
   }
   int indices[qtde_vertices];
@@ -182,7 +176,6 @@ vb BL1(vb &s){
       } 
     }
   }
-  //cout<<"bbbbbbbbbbbbbbbbbbbbb"<<endl;
   return aux;
 }
 
@@ -195,7 +188,6 @@ vb VNS(vb &s){
     int b = 0, b_max = qtde_vertices;
     while(b < b_max){
       s_atual = bagunca(melhor_final,b);
-      //cout<<"bag"<<endl;
       b++;
       s_atual = BL1(s_atual);
       if(f_objetivo(s_atual) < f_objetivo(melhor_final)){
